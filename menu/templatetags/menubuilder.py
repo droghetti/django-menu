@@ -35,18 +35,10 @@ class SubMenuObject(template.Node):
         pass
 
     def render(self, context):
-        current_path = context['request'].path
         user = context['request'].user
-        menu = False
-        for m in Menu.objects.filter(base_url__isnull=False):
-            if m.base_url and current_path.startswith(m.base_url):
-                menu = m
-
-        if menu:
-            context['submenu_items'] = get_items(menu.slug, current_path, user)
-            context['submenu'] = menu
-        else:
-            context['submenu_items'] = context['submenu'] = None
+        current_path = context['request'].path
+        current_menu_item = context['item']['url']
+        context['submenu_items'] = get_items(current_menu_item.replace('/',''), current_path, user)
         return ''
 
 def get_items(menu_name, current_path, user):
@@ -67,21 +59,23 @@ def get_items(menu_name, current_path, user):
             return menuitems
     else:
         menuitems = []
-        
     try:
         menu = Menu.objects.get(slug=menu_name)
     except Menu.DoesNotExist:
         return []
-
     for i in MenuItem.objects.filter(menu=menu).order_by('order'):
         current = ( i.link_url != '/' and current_path.startswith(i.link_url)) or ( i.link_url == '/' and current_path == '/' )
         if menu.base_url and i.link_url == menu.base_url and current_path != i.link_url:
             current = False
         show_anonymous = i.anonymous_only and user.is_anonymous()
         show_auth = i.login_required and user.is_authenticated()
+        try:
+            Menu.objects.get(slug=i.link_url.replace('/',''))
+            have_submenu = True
+        except Menu.DoesNotExist:
+            have_submenu = False
         if (not (i.login_required or i.anonymous_only)) or (i.login_required and show_auth) or (i.anonymous_only and show_anonymous):
-            menuitems.append({'url': i.link_url, 'title': i.title, 'current': current,})
-
+            menuitems.append({'url': i.link_url, 'title': i.title, 'current': current, 'icon': i.icon, 'have_submenu': have_submenu })
     if cache_time >= 0 and not debug:
         cache.set(cache_key, menuitems, cache_time)
     return menuitems

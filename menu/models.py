@@ -82,6 +82,14 @@ class MenuItem(models.Model):
         help_text=_(u'Should this item only be shown to non-logged-in users?')
         )
 
+    icon = models.CharField(
+        _(u'Icons'),
+        blank=True,
+        null=True,
+        max_length=100,
+        help_text=_('CSS class apply to this items')
+    )
+
     class Meta:
         verbose_name = _(u'menu item')
         verbose_name_plural = _(u'menu items')
