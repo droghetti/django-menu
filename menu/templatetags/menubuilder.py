@@ -64,7 +64,7 @@ def get_items(menu_name, current_path, user):
     except Menu.DoesNotExist:
         return []
     for i in MenuItem.objects.filter(menu=menu).order_by('order'):
-        current = ( i.link_url != '/' and current_path.startswith(i.link_url)) or ( i.link_url == '/' and current_path == '/' )
+        current = ( i.link_url != '/' and (current_path == i.link_url)) or ( i.link_url == '/' and current_path == '/' )
         if menu.base_url and i.link_url == menu.base_url and current_path != i.link_url:
             current = False
         show_anonymous = i.anonymous_only and user.is_anonymous()
